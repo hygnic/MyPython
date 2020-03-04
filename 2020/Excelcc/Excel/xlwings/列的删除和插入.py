@@ -10,8 +10,11 @@ except ImportError as e:
 	
 try:
 	print "\n"
+	
+	
+	
 	app = xw.App(visible=False, add_book=False) # 只打开不新增工作簿
-	app.display_alerts = False  # 关闭Excel弹窗
+	app.display_alerts = False  # 关闭Excel的提示和警告信息
 	app.screen_updating = False # 不更新屏幕显示
 	xpath = u"表格删除.xlsx"
 	wb = app.books.open(xpath)
@@ -22,7 +25,7 @@ try:
 	sheet1.api.Rows(1).Insert()  # 插入一行
 	
 	
-	wb.save("new")
+	# wb.save("new")
 
 finally:
 	app.quit()

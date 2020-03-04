@@ -6,7 +6,7 @@
 # # 读取Excel
 # try:
 # 	app=xw.App(visible=False,add_book=False)
-# 	app.display_alerts=False # 关闭Excel弹窗
+# 	app.display_alerts=False  # 关闭Excel的提示和警告信息
 # 	app.screen_updating=False
 #
 # 	xpath = u"xwings示例.xls"
