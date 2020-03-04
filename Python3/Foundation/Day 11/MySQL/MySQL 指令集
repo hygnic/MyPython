@@ -1,0 +1,603 @@
+# User: hygnic
+# Date: 2018/9/15
+MySQL（一）https://www.cnblogs.com/wupeiqi/articles/5713315.html
+MySQL（二）：事务、函数、存储过程 https://www.cnblogs.com/wupeiqi/articles/5713323.html
+Python操作MySQL https://www.cnblogs.com/wupeiqi/articles/5713330.html
+MySQL练习题 http://www.cnblogs.com/wupeiqi/articles/5729934.html
+MySQL练习题参考答案 http://www.cnblogs.com/wupeiqi/articles/5748496.html
+索引、explain、命中索引 http://www.cnblogs.com/wupeiqi/articles/5716963.html
+
+
+# 数据库管理系统 DBMS
+MySQL
+    USE mysql;
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '831015';
+FLUSH PRIVILEGES;
+
+一 .mysql数据库
+1.概念：
+    数据库 == 文件夹
+    数据库表 == 文件
+    数据行 == 文件中的一行数据
+
+
+
+二. mysql部分命令和SQL语句
+cmd 命令下：
+    输入：
+        mysql --initialize-insecure 执行初始化
+        mysqld 开启服务器端
+        mysql 开启客户端
+        mysql -u root -p xxx
+            -u后跟用户名
+            -p后跟密码 （初始化后没有密码）
+
+
+
+    数据库操作：
+            drop 删除
+            delete 清空
+        数据库级别：
+            use; 进入目录
+            show databases; 查看根目录的数据库
+            create database xx;  创建一个xx数据库（目录）
+            CREATE DATABASE 数据库名称 DEFAULT CHARSET utf8 COLLATE utf8_general_ci;   # 这里必须大写
+            CREATE DATABASE 数据库名称 DEFAULT CHARACTER SET gbk COLLATE gbk_chinese_ci;
+
+            导出现有数据库：
+                mysqldump -u用户名 -p密码 数据库名称 >导出文件路径           # 结构+数据
+                mysqldump -u用户名 -p密码 -d 数据库名称 >导出文件路径       # 结构
+            导入现有数据库数据：
+                mysqldump -u root -p密码  数据库名称 < 文件路径
+
+
+        表级别：
+            show tables; 查看有没有表
+            create table xx(nid int, name varchar(20),
+                                         pwd varchar(40));  创建一个xx数据库表
+
+            create table 表名(
+                    列名  类型  是否可以为空 default=2，           # （可选）default=2 ：设置默认值后，在表中输入数据时，若没指定列名，列名为默认值
+                    列名  类型  是否可以为空                                auto_increment primary key 自增列（数字，必须是索引-主键）
+                )ENGINE=InnoDB DEFAULT CHARSET=utf8；            # 引擎InnoDB >>>>支持事务, 原子操作
+                        # 可以小写
+
+                是否可空，null表示空，非字符串
+                not null    - 不可空
+                null        - 可空
+
+                delete from xx 清空 # 自增的序号不会初始化
+                truncate table xx 清空 # 自增序号初始化，且速度较快
+            在保存查询或者处理过的表：
+                create table xx as select * from
+                    (select * from student LEFT JOIN course on  student.class_id=course.cid) as y
+                        # xx是新表名字，as y 是给处理的表一个昵称
+
+        表内级别操作：
+            desc tb1; 查看表的结构属性
+            select * from xx; 查看表中数据 （星号表示全部，可以输入特定的列的名字来查看表中数据）
+
+            增：
+                insert into xx(nid, name, pwd) values(1, 'alex', 123),(45, lcc, 123);  插入数据
+                insert into 表1 (列名,列名,...) select 列名,列名,... from 表2
+                        # 将表二中列导入到表一
+                添加列：alter table 表名 add 列名 类型
+                    # alter是修改的意思
+
+            删：
+                删除列：alter table 表名 drop column 列名
+
+            定位：
+                使用where 列名=某某
+                    delete from xx where yy=某某 # 删除xx表的yy列中叫 某某 的行（可以加and）
+                    select * from 表 where id > 1
+                    select nid,name,gender as gg from 表 where id > 1
+                使用 like
+                    模糊搜索
+            改：
+                列名 as xx
+                    # 更改列名
+
+                修改列的名称和类型：
+                    alter table 表名 modify column 列名 类型;  -- 类型
+                    alter table 表名 change 原列名 新列名 类型; -- 列名，类型
+
+                update 表 set name ＝ 'alex' where id>1
+                    # 将ID大于一的列中name全部设置为alex
+
+                update xx set  yy=2; 修改（更新）xx表中yy列的数据
+
+            其他：
+                a、条件
+                    select * from 表 where id > 1 and name != 'alex' and num = 12;
+
+                    select * from 表 where id between 5 and 16;
+
+                    select * from 表 where id in (11,22,33)  # 将括号中的行选出
+                    select * from 表 where id not in (11,22,33)
+                    select * from 表 where id in (select nid from 表)
+
+                b、通配符（模糊搜索）
+                    select * from 表 where name like 'ale%'  - ale开头的所有（多个字符串）
+                    select * from 表 where name like 'ale_'  - ale开头的所有（一个字符）
+
+                c、限制（分页）
+                    select * from 表 limit 5;            - 显示前5行
+                    select * from 表 limit 4,5;          - 显示从第4行开始的5行
+                    select * from 表 limit 5 offset 4    - 显示从第4行开始的5行 # 推荐用这个
+                        高效率的分页：
+                            select * from 表 where nid > 10000 limit 5;   # 当页数太多时，使用nid自增主键快速定位，然后显示5条
+                                                                            数据,能提高效率
+
+
+                d、排序
+                    select * from 表 order by 列 asc              - 根据 “列” 从小到大排列
+                    select * from 表 order by 列 desc             - 根据 “列” 从大到小排列
+                    select * from 表 order by 列1 desc,列2 asc    - 根据 “列1” 从大到小排列，如果相同则按列2从小到大排序
+                        # such as: select * from tb1 order by nid desc;
+
+                e、去重
+                    ：
+                        分组
+                        select num from 表 group by num
+                        select num,nid from 表 group by num,nid
+                        select num,nid from 表  where nid > 10 group by num,nid order nid desc
+                        select num,nid,count(*),sum(score),max(score),min(score) from 表 group by num,nid
+
+                        对于有聚合关键词的的语句，进行筛选的时候要使用 having 语句
+                            select num from 表 group by num having max(id) > 10
+
+                        特别的：group by 必须在where之后，order by之前
+                    distinct：
+                        select DISTINCT student_id from score where num < 60
+
+                f、联合
+                    联合，自动处理重合
+                    select 列名
+                    from xx
+                    union
+                    select name
+                    from xx2
+
+                    联合，不处理重合
+                    select 列名
+                    from xx
+                    union all
+                    select name
+                    from xx2
+
+                    xx是表名
+
+                g、连表
+
+
+                    A表所有显示，如果B中无对应关系，则值为null
+                    select A.num, A.name, B.name
+                    from A left join B
+                    on A.nid = B.nid
+
+                    B表所有显示，如果B中无对应关系，则值为null
+                    select A.num, A.name, B.name
+                    from A right join B
+                    on A.nid = B.nid
+
+                    连表操作：
+                        select * from xx1，xx2 where xx1.nid = xx2.nid
+
+                        join：
+                            select * from xx1 left join xx2 on xx1.nid = xx2.nid
+                                # XX1表在左
+                                    反之
+                                        right join
+
+
+
+
+            修改默认值：ALTER TABLE testalter_tbl ALTER i SET DEFAULT 1000;
+            删除默认值：ALTER TABLE testalter_tbl ALTER i DROP DEFAULT;
+                    # tb1表示表名 i表示列名
+
+
+        索引：
+            加速查找
+            为什么这么快： B-Tree 索引
+            0.索引种类
+                1.普通索引 - 加速查找
+                2.唯一索引 - （普通索引的特殊值）加速查找，约束列数据不能重复，可以null
+                3.主键索引 - 加速查找，约束列数据不能重复，不能null
+                4.组合索引 - 多列可以创建一个索引文件
+            1.普通索引
+                创建一个带有索引的表：
+                    create table in1(
+                    nid int not null auto_increment primary key,
+                    name varchar(32) not null,
+                    email varchar(64) not null,
+                    extra text,
+                    index ix_name (name) ); # index 添加的索引在name列，ix_name是为索引取得名字
+
+                添加：
+                    create index index_name on table1(column_name)
+                删除：
+                    drop index_name on table_name;
+                查看索引：
+                    show index from table_name;
+                注意：
+                    注意：对于创建索引时如果是BLOB 和 TEXT 类型，必须指定length
+
+            2.唯一索引（普通索引的特殊值）
+                和普通索引的方法相同，只需改动为 unique index
+
+
+            3.主键索引（主键也是索引）
+                一张表一个主键（可以多列），唯一的不能重复，不能为空，一般情况下，自增列设置主键
+                先天添加主键：
+                        create table student（
+                            name varchar(10) not null,
+                            num int not null,
+                            age int,
+                            gender int,
+                            primary key(name,num) # 可联合两列作为一个主键，一般里面就一列
+                        ）
+
+                        也可以：
+                            nid int not null auto_increment primary key,
+                后天添加主键：
+
+                    alter table 表名 add primary key(列名);
+
+
+                删除主键：
+                    alter table 表名 drop primary key;
+                    alter table 表名  modify  列名 int, drop primary key;
+            4.组合索引（组合索引是将n个列组合成一个索引）
+
+                其应用场景为：频繁的同时使用n列来进行查询，如：where n1 = 'alex' and n2 = 666
+                创建一个表
+                    create table in3(
+                    nid int not null auto_increment primary key, （自增列设置主键）
+                    name varchar(32) not null,
+                    pwd int not null,
+                    extra text
+                    )
+                创建组合索引（例子5）
+                    create index ix_name_email on in3(name,pwd)
+                    普通组合索引
+                    唯一组合索引
+                    最左匹配原则（例子5）：
+                        select * from tb1 where name = 'alex'
+                        select * from tb1 where name = 'alex' and pwd = '123'
+                            # 两行的效果相同，都会走索引
+                        select * from tb1 where pwd = '123'
+                            # 不会走索引
+
+            5.其他：
+                ============================================================================================================
+                1.覆盖索引：
+                    假如nid是索引列
+                    select nid from table1 where nid = 98; # 这种情况下，获取的数据只需要索引表运算就可以拿到，
+                                                                # 不需要到原始表中拿数据，这种情况就叫覆盖索引
+                2.合并索引：
+                    利用两个索引去搜索
+                    例子6 假如下面是个表：
+                        nid  name（单独索引）  sid(单独索引)
+                        select * from tb1 where name = 'alex' and sid = '123'
+                3.执行计划(explain):(相对比较准确的描述当前SQL的运行状况，可用于查看表是否走的索引)
+
+                    假如：
+                        表tb1,sid有索引,email列无索引
+
+                    explain：
+                        explain + 查询SQL - 用于显示SQL执行信息参数，根据参考信息可以进行SQL优化
+                        比如：
+                            mysql> explain select * from tb1;
+
+                    limit：
+                        select * from tb1 where email = 'alex' limit 1
+                            # 如果email没有索引，会查询完全表，找出所有 'alex' 列，如果后面加上limit 1 ，表示当查找到一个‘alex’时就停止
+                                # 能提高效率
+
+
+                    通过explain查询到的表格：
+                    如：mysql> explain select * from (select nid,name from tb1 where nid < 10) as B;
+                    +----+-------------+------------+-------+---------------+---------+---------+------+------+-------------+
+                    | id | select_type | table      | type  | possible_keys | key     | key_len | ref  | rows | Extra       |
+                    +----+-------------+------------+-------+---------------+---------+---------+------+------+-------------+
+                    |  1 | PRIMARY     | <derived2> | ALL   | NULL          | NULL    | NULL    | NULL |    9 | NULL        |
+                    |  2 | DERIVED     | tb1        | range | PRIMARY       | PRIMARY | 8       | NULL |    9 | Using where |
+                    +----+-------------+------------+-------+---------------+---------+---------+------+------+-------------+
+                        特别的：如果使用union连接气值可能为null
+                    表格第一行表示的意义：
+                        select_type
+                            查询类型
+                                SIMPLE          简单查询
+                                PRIMARY         最外层查询
+                                SUBQUERY        映射为子查询
+                                DERIVED         子查询
+                                UNION           联合
+                                UNION RESULT    使用联合的结果
+                                ...
+                        table
+                            正在访问的表名
+
+
+                        type   # 如果遇到all 和 index 一般还有优化的余地
+                            查询时的访问方式，性能：all < index < range < index_merge < ref_or_null < ref < eq_ref < system/const
+                                ALL             全表扫描，对于数据表从头到尾找一遍
+                                                select * from tb1;
+                                                特别的：如果有limit限制，则找到之后就不在继续向下扫描
+                                                       select * from tb1 where email = 'seven@live.com'
+                                                       select * from tb1 where email = 'seven@live.com' limit 1;
+                                                       虽然上述两个语句都会进行全表扫描，第二句使用了limit，则找到一个后就不再继续扫描。
+
+                                INDEX           全索引扫描，对索引从头到尾找一遍
+                                                select nid from tb1;
+
+                                RANGE          对索引列进行范围查找（效率不错）
+                                                explain select * from tb1 where sid<10  #  此时是走是的索引，type列是range
+
+                                                PS:
+                                                    between and in  >   >=  <   <=
+                                                      这些操作都会走索引（若存在索引）
+
+                                                    注意：!= 和 > 符号  （这两个就算有索引也不会走索引，不走索引时表示的是 all）
+                                                     !=:
+                                                        若为普通索引和唯一索引，则不走索引，若为主键索引，走索引
+
+
+                                INDEX_MERGE     合并索引，使用多个单列索引搜索
+                                                select *  from tb1 where name = 'alex' or nid in (11,22,33);
+
+                                REF             根据索引查找一个或多个值
+                                                select *  from tb1 where name = 'seven';
+
+                                EQ_REF          连接时使用primary key 或 unique（唯一索引）类型
+                                                select tb2.nid,tb1.name from tb2 left join tb1 on tb2.nid = tb1.nid;
+
+
+
+                                CONST           # 覆盖索引时就会这样
+                                                常量
+                                                表最多有一个匹配行,因为仅有一行,在这行的列值可被优化器剩余部分认为是常数,const表很快,因为它们只读取一次。
+                                                select nid from tb1 where nid = 2 ;
+
+                                SYSTEM          系统
+                                                表仅有一行(=系统表)。这是const联接类型的一个特例。
+                                                select * from (select nid from tb1 where nid = 1) as A;
+                        possible_keys
+                            可能使用的索引
+
+                        key
+                            真实使用的
+
+                        key_len
+                            MySQL中使用索引字节长度
+
+                        rows
+                            mysql估计为了找到所需的行而要读取的行数 ------ 只是预估值
+
+                        extra
+                            该列包含MySQL解决查询的详细信息
+                            “Using index”
+                                此值表示mysql将使用覆盖索引，以避免访问表。不要把覆盖索引和index访问类型弄混了。
+                            “Using where”
+                                这意味着mysql服务器将在存储引擎检索行后再进行过滤，许多where条件里涉及索引中的列，当（并且如果）它读取索引时，就能被存储引擎检验，因此不是所有带where子句的查询都会显示“Using where”。有时“Using where”的出现就是一个暗示：查询可受益于不同的索引。
+                            “Using temporary”
+                                这意味着mysql在对查询结果排序时会使用一个临时表。
+                            “Using filesort”
+                                这意味着mysql会对结果使用一个外部索引排序，而不是按索引次序从表里读取行。mysql有两种文件排序算法，这两种排序方式都可以在内存或者磁盘上完成，explain不会告诉你mysql将使用哪一种文件排序，也不会告诉你排序会在内存里还是磁盘上完成。
+                            “Range checked for each record(index map: N)”
+                                这个意味着没有好用的索引，新的索引将在联接的每一行上重新估算，N是显示在possible_keys列中索引的位图，并且是冗余的。
+
+
+
+
+
+
+
+
+            外键：
+                外键，一个特殊的索引，只能是指定内容（建立表的关系）
+                表一表二数据需要连接，约束
+                    在其中一个表中：
+                        添加外键：alter table 从表 add constraint 外键名称（形如：FK_从表_主表） foreign key 从表(外键字段) references 主表(主键字段);
+                               # constraint 表示约束
+                        删除外键：alter table 表名 drop foreign key 外键名称
+
+                已有表一，在创建表二时直接就建立关联、外键
+                    create table color(
+                        nid int not null primary key,
+                        name char(16) not null
+                    )
+
+                    create table fruit(
+                        nid int not null primary key,
+                        smt char(32) null ,
+                        color_id int not null,
+                        constraint fk_cc foreign key (color_id) references color(nid)
+                    )
+
+
+
+
+            唯一：
+                可有可无，一张表可以指定多个唯一列
+
+
+
+
+
+
+
+    用户管理：
+        创建用户
+            create user 用户名@IP地址 identified by '密码';
+        删除用户
+            drop user 用户名@IP地址;
+        修改用户
+            rename user 用户名@IP地址 to 新用户名@IP地址;
+        修改密码
+            set password for 用户名@IP地址 = 'Password(新密码)';
+            set password for 用户名@IP地址 = '新密码';
+
+    授权管理：
+        1. show grants for '用户'@'IP地址'                  -- 查看权限
+        2. grant  权限 on 数据库.表 to   '用户'@'IP地址'     -- 授权
+        3. revoke 权限 on 数据库.表 from '用户'@'IP地址'     -- 取消权限
+            权限：
+                all privileges  除grant外的所有权限
+                select          仅查权限
+                select,insert   查和插入权限
+                ...
+                usage                   无访问权限
+                alter                   使用alter table
+                alter routine           使用alter procedure和drop procedure
+                create                  使用create table
+                create routine          使用create procedure
+                create temporary tables 使用create temporary tables
+                create user             使用create user、drop user、rename user和revoke  all privileges
+                create view             使用create view
+                delete                  使用delete
+                drop                    使用drop table
+                execute                 使用call和存储过程
+                file                    使用select into outfile 和 load data infile
+                grant option            使用grant 和 revoke
+                index                   使用index
+                insert                  使用insert
+                lock tables             使用lock table
+                process                 使用show full processlist
+                select                  使用select
+                show databases          使用show databases
+                show view               使用show view
+                update                  使用update
+                reload                  使用flush
+                shutdown                使用mysqladmin shutdown(关闭MySQL)
+                super                   使用change master、kill、logs、purge、master和set global。还允许mysqladmin调试登陆
+                replication client      服务器位置的访问
+                replication slave       由复制从属使用
+
+    数据库中数据：
+        数据库名.*           数据库中的所有
+        数据库名.表          指定数据库中的某张表
+        数据库名.存储过程     指定数据库中的存储过程
+        *.*                 所有数据库
+
+
+    关于引号：
+        密码必须用
+        特殊符号必须用比如 %
+            对于用户和IP：
+                用户名@IP地址         用户只能在该IP下才能访问
+                用户名@"192.168.1.%"   用户只能在该IP段下才能访问(通配符%表示任意)
+                用户名@%             用户可以再任意IP下访问(默认IP地址为%)
+
+
+
+
+
+
+
+    将mysql服务端制作成一个Windows服务：
+        需要cd进入到bin目录下
+        net start mysql 启动服务器（在启用Windows服务的情况下）
+        net stop mysql 关闭服务器（在启用Windows服务的情况下）
+
+三.数据类型
+    1. 数值
+        bit：
+            bit[(M)] 二进制
+            二进制位（101001），m表示二进制位的长度（1-64），默认m＝1
+        tinyint：
+            tinyint[(m)] [unsigned] [zerofill]
+            特定范围类，默认有符号（正负的区别）
+                create table xx（nid int unsigned） # 无符号 >>没有负数
+            小整数，数据类型用于保存一些范围的整数数值范围：
+                有符号：
+                    -128 ～ 127.
+                无符号：
+                    0 ～ 255
+
+            特别的： MySQL中无布尔值，使用tinyint(1)构造。
+
+        smallint
+        int
+        bigint:
+            范围不一样
+
+        decimal：
+            decimal[(m[,d])] [unsigned] [zerofill]
+            精准的
+            create table xx（num decimal（6，2）） # 保存6位有效数字，其中两位为小数
+                                # 比如8765.86
+
+            特别的：对于精确数值计算时需要用此类型
+                   decimal能够存储精确值的原因在于其内部按照字符串存储
+
+
+        FLOAT、DOUBLE：
+            数值大了不精准，很少用
+
+    2. 字符串
+        char:
+            char (m)
+            char数据类型用于表示固定长度的字符串，可以包含最多达255个字符。其中m代表字符串的长度。
+            PS: 即使数据小于m长度，也会占用m长度
+        varchar:
+            varchar(m)
+            varchar数据类型用于变长的字符串，可以包含最多达255个字符。其中m代表该数据类型所允许保存的字符串的最大长度，只要长度小于该最大值的字符串都可以被保存在该数据类型中。
+
+            注：虽然varchar使用起来较为灵活，但是从整个系统的性能角度来说，char数据类型的处理速度更快，有时甚至可以超出varchar处理速度的50%。
+                因此，用户在设计数据库时应当综合考虑各方面的因素，以求达到最佳的平衡
+
+
+        text
+        mediumtext
+        longtext
+    二进制数据
+        TinyBlob、Blob、MediumBlob、LongBlob
+        上传文件
+        强制二进制方式
+        用得少
+
+    3. 时间
+        DATE
+            YYYY-MM-DD（1000-01-01/9999-12-31）
+
+        TIME
+            HH:MM:SS（'-838:59:59'/'838:59:59'）
+
+        YEAR
+            YYYY（1901/2155）
+
+        DATETIME
+            最常见
+            YYYY-MM-DD HH:MM:SS（1000-01-01 00:00:00/9999-12-31 23:59:59    Y）
+
+        TIMESTAMP
+
+            YYYYMMDD HHMMSS（1970-01-01 00:00:00/2037 年某时）
+    4. 特殊
+        enum枚举类型
+            An ENUM column can have a maximum of 65,535 distinct elements. (The practical limit is less than 3000.
+            其他语言中的示例：
+                创建一个枚举：
+                    Enum week:
+                        x='星期一'
+                        y='星期二'    # 这是一种对应关系
+                        z='星期三'
+
+                    print week.x   # result:星期一
+
+            数据库中示例：
+                CREATE TABLE shirts (
+                    name VARCHAR(40),
+                    size ENUM('x-small', 'small', 'medium', 'large', 'x-large')
+                );   # 表示在size这一列，插入的数据只能是后面给出的几种中选一个
+                INSERT INTO shirts (name, size) VALUES ('dress shirt','large'), ('t-shirt','medium'),('polo shirt','small');
+
+        集合
+            A SET column can have a maximum of 64 distinct members.
+            示例：
+                CREATE TABLE my_set (col SET('a', 'b', 'c', 'd'));
+                        # 较于枚举，集合可以选择多个已经给出的选项
+                INSERT INTO my_set (col) VALUES ('a,d'), ('d,a'), ('a,d,a'), ('a,d,d'), ('d,a,d');
+

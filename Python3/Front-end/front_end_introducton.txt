@@ -1,0 +1,75 @@
+
+前端：
+    1.HTML 展示内容: 标签(标记语言)
+    2.CSS 外观: 选择器 属性
+    3.Javascript 动作: 基础语法 BOM&DOM
+
+web开发本质：
+    1.浏览器和服务器之前的消息传递
+        HTTP协议：规定相互发送的信息的格式
+            情况1：
+                "在本地网页上显示"
+                import socket
+                sk=socket.socket()
+                sk.bind(("127.0.0.1", 8000))
+                sk.listen(5)
+
+                while True:
+                    conn, addr = sk.accept()
+                    data = conn.recv(1024)
+                    conn.send(b'HTTP/1.1 200 OK\r\n\r\n')
+                    conn.send(b'hello')
+
+                    conn.close()
+
+            情况2：读取外部的文件
+                import socket
+                sk=socket.socket()
+                sk.bind(("127.0.0.1", 8000))
+                sk.listen(5)
+
+                while True:
+                    conn, addr = sk.accept()
+                    data = conn.recv(1024)
+
+                    with open("01.html", "r") as f:
+                        msg = f.read()
+                    conn.send(b'HTTP/1.1 200 OK\r\n\r\n')
+                    conn.send(msg)
+
+                    conn.close()
+
+标签名
+标签分类：
+    分类标准1
+        单标签
+        双标签
+    分类标准2
+        块级标签  h1-6 div p hr等
+                默认占浏览器宽度（内容有多宽占多宽）
+                能设置长和宽
+        内联标签（行内标签）a img span等
+                根据内容确定长度
+                不能设置长和宽
+标签至少都有三个属性：
+    id（可以没有）
+    class
+    style
+
+HTML文件结构：
+<!DOCTYPE html> # 表示这是一个HTML5文件
+<html>
+<head>
+    # 开头 告诉浏览器你使用的字体、CSS等信息，这些信息不会显示到浏览器上
+</head>
+
+<body>
+    # 主体内容，呈现给用户
+</body>
+
+</html>
+
+快捷方式
+
+
+

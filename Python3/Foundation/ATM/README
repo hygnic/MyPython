@@ -1,0 +1,36 @@
+ATM
+    README
+    atm #主程序
+        __init__.py
+
+        bin #执行文件
+            __init__.py
+            atm.py #执行程序
+            manage.py #管理端，未实现
+
+        conf #配置文件
+            __init__.py
+            settings.py
+
+        core #主要的程序逻辑在这里
+            __init__.py
+            accounts.py #用于从文件中加载用户数据
+            auth.py #用户认证模块
+            db_handler.py #数据库连接
+            logger.py #日志记录生成模块
+            main.py #主逻辑交互程序
+            transaction.py #记账、还钱、取钱的资金相关操作
+
+        db #用户存储数据的地方
+            __init__.py
+            account_sample.py # 生成一个初始的账户数据
+            accounts #存各个用户的账户数据，一个用户一个文件
+                123.json #用户文件示例
+
+        log #日志目录
+            __init__.py
+            access.log #用户登录和操作日志
+            transaction.log #所以交易日志
+
+    shopping_mall # 电子商城程序
+        __init__.py

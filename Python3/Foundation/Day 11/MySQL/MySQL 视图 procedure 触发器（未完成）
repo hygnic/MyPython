@@ -1,0 +1,200 @@
+# User: hygnic
+# Date: 2018/9/19
+巧言令色 鲜以仁
+巧言乱德。小不忍则乱大谋
+
+视图
+    创建一个视图（临时表）,定义一个名字（不是真实的表，是动态变化的）：
+        create view temp as  # temp 为创建视图的名字
+            select * from class where cid in (4,5)
+    删除：
+        格式：DROP VIEW 视图名称
+
+    修改：
+        格式：ALTER VIEW 视图名称 AS SQL语句
+
+存储过程：
+    创建存储过程：
+        delimiter //                # delimiter 表示重新定义终止符号
+        # 这里将默认的；终止符定义为//
+        create procedure p1()
+        BEGIN
+            select * from t1;
+        END //
+        delimiter ;
+
+
+    存储过程：
+        procedure p1(
+            in arg1 int # 在存储过程的内部使用。传值
+            out arg2 varchar(50) # 在存储过程内部arg2默认为null，离开存储过程时，上面的值会赋予给它。获取值
+            inout arg3 int # 既能传值也能接收值
+        )
+                比如例子1：
+                    delimiter \\
+                    create procedure p1(
+                        in i1 int,
+                        in i2 int,
+                        inout i3 int,
+                        out r1 int
+                    )
+                    BEGIN
+                        DECLARE temp1 int;          # 声明变量 DECLARE
+                        DECLARE temp2 int default 0;
+
+                        set temp1 = 1;              # 赋值
+
+                        set r1 = i1 + i2 + temp1 + temp2;
+
+                        set i3 = i3 + 100;
+
+                    end\\
+                    delimiter ;
+
+                    -- 执行存储过程
+                    set @t1 =4;
+                    set @t2 = 0;
+                    CALL p1 (1, 2 ,@t1, @t2);
+                    SELECT @t1,@t2;
+                        结果：
+                            @t1 @t2
+                            104	4
+
+                        分析：
+                            in(数据导入):
+                            out(数据导出为4 = 1+2+1+0):
+                                r1 = 4
+                            inout(导入本身的数据，然后导出):
+                                i3 = 4+100=104
+
+                                自己的练习（例子2）：
+                                    delimiter //
+                                    create procedure p2(
+                                        in a int,
+                                        in b int,
+                                        out c int,
+                                        inout d int
+                                    )
+                                    BEGIN
+
+                                    DECLARE t int;
+                                    SET t = 100;
+                                    SET c= a+b;
+                                    SET d = t+d;
+                                    select * from class; # 添加SQL语句，一个只能有一个select（可以连表）
+
+                                    END //
+                                    delimiter ;
+                                    set @out_c=3;
+                                    set @inout_d=4;
+                                    call p2(1,2,@out_c,@inout_d);
+                                    select @out_c,@inout_d;
+                                        结果一：
+                                            返回的数字
+                                            @out_c @inout_d
+                                            3      104
+                                        结果二：
+                                            返回一个表(结果集)
+                                            来自（select * from class;）
+
+    执行存储过程：
+        mysql执行存储过程：
+            call p1()
+        pymysql执行存储过程：
+            若有参数，则传入args中，比如执行例子1和例子2：
+                cursor.callproc('p1', args=(1, 22, 3, 4))
+                # 获取执行完存储的参数
+                cursor.execute("select @_p1_0,@_p1_1,@_p1_2,@_p1_3") # select 和@_p1_x是固定用法,p1是过程名
+            若无参数：
+                cursor.callproc('p1'）
+
+    语句：
+        if:
+            delimiter \\
+            CREATE PROCEDURE proc_if ()
+            BEGIN
+
+                declare i int default 0;
+                if i = 1 THEN
+                    SELECT 1;
+                ELSEIF i = 2 THEN
+                    SELECT 2;
+                ELSE
+                    SELECT 7;
+                END IF;
+
+            END\\
+            delimiter ;
+
+        循环语句（while）：
+
+            delimiter \\
+            CREATE PROCEDURE proc_while ()
+            BEGIN
+
+                DECLARE num INT ;
+                SET num = 0 ;
+                WHILE num < 10 DO
+                    SELECT
+                        num ;
+                    SET num = num + 1 ;
+                END WHILE ;
+
+            END\\
+            delimiter;
+
+        repeat循环：
+
+            delimiter \\
+            CREATE PROCEDURE proc_repeat ()
+            BEGIN
+
+                DECLARE i INT ;
+                SET i = 0 ;
+                repeat
+                    select i;
+                    set i = i + 1;
+                    until i >= 5
+                end repeat;
+
+            END\\
+            delimiter ;
+
+        loop循环：
+
+            BEGIN
+                declare i int default 0;
+                loop_label: loop
+
+                    set i=i+1;
+                    if i<8 then
+                        iterate loop_label;
+                    end if;
+                    if i>=10 then
+                        leave loop_label;
+                    end if;
+                    select i;
+                end loop loop_label;
+
+            END
+
+        动态执行SQL语句（类似于反射）：
+            delimiter \\
+            DROP PROCEDURE IF EXISTS proc_sql \\
+            CREATE PROCEDURE proc_sql ()
+            BEGIN
+                declare p1 int;
+                set p1 = 11;
+                set @p1 = p1;
+
+                PREPARE prod FROM 'select * from tb2 where nid > ?';  # 'select * from tb2 where nid > ?'是一个字符串，不能直接运行 ？表示占位符
+                                                    # PREPARE 将字符串 封装到 prod中 rod是自定义的名字
+                                                        # 这里的字符串可以通过 p(in args varchar(255))的方式传入
+                EXECUTE prod USING @p1;   # 执行prod，传入参数@P1到占位符处，必须使用@格式
+                DEALLOCATE prepare prod;
+
+            END\\
+            delimiter ;
+
+
+触发器：

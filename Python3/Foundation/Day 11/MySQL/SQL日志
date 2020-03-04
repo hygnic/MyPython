@@ -1,0 +1,6 @@
+慢日志记录
+
+    slow_query_log = ON                     慢日志记录打开
+    log_queries_not_using_indexes = ON
+    long_query_time = 0.5                   SQL操作时间大于0.5秒的会被记录下来
+    slow_query_log_file = D:\xx.log         决定日志文件的位置
