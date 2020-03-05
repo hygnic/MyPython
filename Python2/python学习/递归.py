@@ -16,9 +16,9 @@ func(r"E:\move on move on\Python2\gisTK")
 
 # bin
 # shell
-# tool_entrance.py
+# entrance.py
 # docs
-# Gispot
+# GiSpot
 # Map
 # ejpg.py
 # export_jpeg.pyc
@@ -46,9 +46,9 @@ func2(r"E:\move on move on\Python2\gisTK",0)
 
 # bin
 # 	shell
-# 		tool_entrance.py
+# 		entrance.py
 #  docs
-#  Gispot
+#  GiSpot
 # 	Map
 # 		ejpg.py
 # 		export_jpeg.pyc
