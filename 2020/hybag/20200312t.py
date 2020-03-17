@@ -1,9 +1,9 @@
 # -*- coding:utf-8 -*-
 # User: liaochenchen
 # Date: 2020/3/12
-
+# py2 arcgis10.6
+"""快速将空的shp图层筛选出来"""
 import os
-
 # path = ur"G:\高标准分布图\崇州\510000高标准农田建设上图入库数据20200112\510000GT2012510184成都市崇州市怀远镇富丽村、黄鹤村、达通村改造完善建设高标准基本农田项目YS\GBZ2012510184GT成都市崇州市怀远镇富丽村、黄鹤村、达通村改造完善建设高标准基本农田项目YS.shp"
 # a = os.path.getsize(path)
 # print a
