@@ -28,5 +28,6 @@
 # 	app.quit()
 
 
-
+list1 = [1,2]
+print isinstance(list1,list)
 
