@@ -14,3 +14,4 @@ from collections import namedtuple
 Card = namedtuple("Card", "first second")
 new_card = Card(19, 20)
 print("spam is this a hterr".split())
+new_card
